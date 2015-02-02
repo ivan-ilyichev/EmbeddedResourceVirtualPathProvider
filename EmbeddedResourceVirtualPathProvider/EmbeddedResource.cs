@@ -48,11 +48,11 @@ namespace EmbeddedResourceVirtualPathProvider
                     projectSourcePath =
                         new DirectoryInfo((Path.Combine(HttpRuntime.AppDomainAppPath, projectSourcePath))).FullName;
                 }
-                var fileName = Path.Combine(projectSourcePath,
-                                            resourcePath.Substring(assembly.GetName().Name.Length + 1).Replace('.', '\\'));
 
+                var path = resourcePath.Substring(assembly.GetName().Name.Length + 1).Replace('.', '\\');
+                var fileName = EmbeddedResourcePathHelper.GetPath(projectSourcePath, path);
 
-                return GetFileName(fileName);
+                return fileName;
             }
             catch (Exception ex)
             {
@@ -63,26 +63,6 @@ namespace EmbeddedResourceVirtualPathProvider
                 return null;
 #endif
             }
-        }
-
-        string GetFileName(string possibleFileName)
-        {
-            var indexOfLastSlash = possibleFileName.LastIndexOf('\\');
-            while (indexOfLastSlash > -1)
-            {
-                if (File.Exists(possibleFileName)) return possibleFileName;
-                possibleFileName = ReplaceChar(possibleFileName, indexOfLastSlash, '.');
-                indexOfLastSlash = possibleFileName.LastIndexOf('\\');
-            }
-            return null;
-        }
-
-
-        string ReplaceChar(string text, int index, char charToUse)
-        {
-            char[] buffer = text.ToCharArray();
-            buffer[index] = charToUse;
-            return new string(buffer);
         }
     }
 }

@@ -8,6 +8,7 @@
     <script src="/alert.js" type="text/javascript"></script>
     <script src="/alert2.js" type="text/javascript"></script>
     <script src="/Scripts/alert.3.js" type="text/javascript"></script>
+    <script src="/Scripts/dashed.path/test.js" type="text/javascript"></script>
 
 </head>
 <body>
