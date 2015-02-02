@@ -22,8 +22,6 @@ namespace EmbeddedResourceVirtualPathProvider
             if (!Directory.Exists(projectSourcePath))
                 return null;
 
-            var fileName = Path.Combine(projectSourcePath, resourceName);
-
             // search all subdirectories with dashes
             var subDirectories = Directory.GetDirectories(projectSourcePath, "*", SearchOption.AllDirectories);
             var dottedDirectories = subDirectories
@@ -35,12 +33,13 @@ namespace EmbeddedResourceVirtualPathProvider
             {
                 var slashedDir = dir.Replace('.', '\\');
                 // replace dashed path 
-                if (fileName.StartsWith(slashedDir, true, CultureInfo.InvariantCulture))
+                if (resourceName.StartsWith(slashedDir, true, CultureInfo.InvariantCulture))
                 {
-                    fileName = dir + fileName.Substring(slashedDir.Length);
+                    resourceName = dir + resourceName.Substring(slashedDir.Length);
                     break;
                 }
             }
+            var fileName = Path.Combine(projectSourcePath, resourceName);
 
             fileName = GetFileName(fileName);
 
