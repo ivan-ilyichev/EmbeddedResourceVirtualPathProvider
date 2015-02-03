@@ -17,12 +17,12 @@ namespace EmbeddedResourceVirtualPathProvider
             this.ResourcePath = resourcePath;
             if (!string.IsNullOrWhiteSpace(projectSourcePath))
             {
-                var filename = GetFileNameFromProjectSourceDirectory(assembly, resourcePath, projectSourcePath);
+                FileName = GetFileNameFromProjectSourceDirectory(assembly, resourcePath, projectSourcePath);
 
-                if (filename != null) //means that the source file was found, or a copy was in the web apps folders
+                if (FileName != null) //means that the source file was found, or a copy was in the web apps folders
                 {
-                    GetCacheDependency = (utcStart) => new CacheDependency(filename, utcStart);
-                    GetStream = () => File.OpenRead(filename);
+                    GetCacheDependency = (utcStart) => new CacheDependency(FileName, utcStart);
+                    GetStream = () => File.OpenRead(FileName);
                     return;
                 }
             }
@@ -33,6 +33,8 @@ namespace EmbeddedResourceVirtualPathProvider
         public DateTime AssemblyLastModified { get; private set; }
 
         public string ResourcePath { get; private set; }
+
+        public string FileName { get; private set; }
 
         public Func<Stream> GetStream { get; private set; }
         public Func<DateTime, CacheDependency> GetCacheDependency { get; private set; }
