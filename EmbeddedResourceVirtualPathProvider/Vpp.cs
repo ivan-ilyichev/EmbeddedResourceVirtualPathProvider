@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Web;
 using System.Web.Caching;
 using System.Web.Hosting;
-using System.Linq;
 
 namespace EmbeddedResourceVirtualPathProvider
 {
@@ -15,6 +16,7 @@ namespace EmbeddedResourceVirtualPathProvider
 
         public Vpp(params Assembly[] assemblies)
         {
+            RegisteredAssemblies = new List<VppAssemblyInfo>();
             Array.ForEach(assemblies, a => Add(a));
             UseResource = er => true;
             UseLocalIfAvailable = resource => true;
@@ -23,17 +25,39 @@ namespace EmbeddedResourceVirtualPathProvider
 
         public Func<EmbeddedResource, bool> UseResource { get; set; }
         public Func<EmbeddedResource, bool> UseLocalIfAvailable { get; set; }
-        public Func<EmbeddedResource, EmbeddedResourceCacheControl> CacheControl { get; set; } 
+        public Func<EmbeddedResource, EmbeddedResourceCacheControl> CacheControl { get; set; }
+        public List<VppAssemblyInfo> RegisteredAssemblies { get; private set; }
 
         public void Add(Assembly assembly, string projectSourcePath = null)
         {
+            // retrieve absolute path if available
+            projectSourcePath = string.IsNullOrWhiteSpace(projectSourcePath)
+                ? null
+                : Path.IsPathRooted(projectSourcePath)
+                    ? projectSourcePath
+                    : new DirectoryInfo((Path.Combine(HttpRuntime.AppDomainAppPath, projectSourcePath))).FullName;
+
+            // scan folders not to prevent non-optimal disk read in future
+            var scannedFolders = string.IsNullOrWhiteSpace(projectSourcePath) || !Directory.Exists(projectSourcePath)
+                ? new List<string>()
+                : Directory.GetDirectories(projectSourcePath, "*", SearchOption.AllDirectories).ToList();
+
+            var assemblyInfo = new VppAssemblyInfo()
+            {
+                Assembly = assembly,
+                ProjectSourcePath = projectSourcePath,
+                ScannedSources = scannedFolders
+            };
+            RegisteredAssemblies.Add(assemblyInfo);
+
             var assemblyName = assembly.GetName().Name;
+
             foreach (var resourcePath in assembly.GetManifestResourceNames().Where(r => r.StartsWith(assemblyName)))
             {
                 var key = resourcePath.ToUpperInvariant().Substring(assemblyName.Length).TrimStart('.');
                 if (!resources.ContainsKey(key))
                     resources[key] = new List<EmbeddedResource>();
-                resources[key].Insert(0, new EmbeddedResource(assembly, resourcePath, projectSourcePath));
+                resources[key].Insert(0, new EmbeddedResource(assemblyInfo, resourcePath));
             }
         }
  
@@ -44,7 +68,6 @@ namespace EmbeddedResourceVirtualPathProvider
 
         public override VirtualFile GetFile(string virtualPath)
         {
-            //if (base.FileExists(virtualPath)) return base.GetFile(virtualPath);
             var resource = GetResourceFromVirtualPath(virtualPath);
             if (resource != null)
                 return new EmbeddedResourceVirtualFile(virtualPath, resource, CacheControl(resource));
@@ -75,7 +98,7 @@ namespace EmbeddedResourceVirtualPathProvider
         public EmbeddedResource GetResourceFromVirtualPath(string virtualPath)
         {
             var path = VirtualPathUtility.ToAppRelative(virtualPath).TrimStart('~', '/');
-            var index = path.LastIndexOf("/");
+            var index = path.LastIndexOf("/", StringComparison.InvariantCultureIgnoreCase);
             if (index != -1)
             {
                 var folder = path.Substring(0, index).Replace("-", "_"); //embedded resources with "-"in their folder names are stored as "_".
@@ -114,14 +137,6 @@ namespace EmbeddedResourceVirtualPathProvider
         {
             return base.FileExists(virtualPath) && UseLocalIfAvailable(resource);
         }
-
-        
-        //public override string GetCacheKey(string virtualPath)
-        //{
-        //    var resource = GetResourceFromVirtualPath(virtualPath);
-        //    if (resource != null) return virtualPath + "blah";
-        //    return base.GetCacheKey(virtualPath);
-        //}
 
         public IEnumerator GetEnumerator()
         {

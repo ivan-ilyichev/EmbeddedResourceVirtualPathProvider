@@ -8,11 +8,13 @@ namespace TestWebProject.App_Code
     {
         public static void AppInitialize()
         {
-            HostingEnvironment.RegisterVirtualPathProvider(new EmbeddedResourceVirtualPathProvider.Vpp()
+            var vpp = new EmbeddedResourceVirtualPathProvider.Vpp()
             {
-                {typeof (Marker).Assembly, @"..\TestResourceLibrary"},
+                { typeof (Marker).Assembly, @"..\TestResourceLibrary" },
+            };
+            vpp.UseLocalIfAvailable = r => true;
 
-            });
+            HostingEnvironment.RegisterVirtualPathProvider(vpp);
         }
     }
 }
