@@ -50,7 +50,7 @@ namespace EmbeddedResourceVirtualPathProvider
         {
             try
             {
-                var resourceName = AssemblyInfo.ProjectSourcePath.Substring(AssemblyInfo.Assembly.GetName().Name.Length + 1).Replace('.', '\\');
+                var resourceName = ResourcePath.Substring(AssemblyInfo.Assembly.GetName().Name.Length + 1).Replace('.', '\\');
 
                 if (!Directory.Exists(AssemblyInfo.ProjectSourcePath))
                     return null;
