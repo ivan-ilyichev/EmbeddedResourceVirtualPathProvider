@@ -6,13 +6,13 @@ namespace EmbeddedResourceVirtualPathProvider
 {
     class EmbeddedResourceVirtualFile : VirtualFile
     {
-        readonly EmbeddedResource _embedded;
+        public readonly EmbeddedResource Embedded;
         readonly EmbeddedResourceCacheControl _cacheControl;
 
         public EmbeddedResourceVirtualFile(string virtualPath, EmbeddedResource embedded, EmbeddedResourceCacheControl cacheControl)
             : base(virtualPath)
         {
-            this._embedded = embedded;
+            this.Embedded = embedded;
             this._cacheControl = cacheControl;
         }
 
@@ -33,14 +33,14 @@ namespace EmbeddedResourceVirtualPathProvider
                     _cacheControl.Cacheability == HttpCacheability.Public ||
                     _cacheControl.Cacheability == HttpCacheability.ServerAndPrivate)
                 {
-                    var lastModified = !string.IsNullOrWhiteSpace(_embedded.FileName) && File.Exists(_embedded.FileName)
-                        ? File.GetLastWriteTime(_embedded.FileName)
-                        : _embedded.AssemblyLastModified;
+                    var lastModified = !string.IsNullOrWhiteSpace(Embedded.FileName) && File.Exists(Embedded.FileName)
+                        ? File.GetLastWriteTime(Embedded.FileName)
+                        : Embedded.AssemblyLastModified;
 
                     HttpContext.Current.Response.Cache.SetLastModified(lastModified);
                 }
             }
-            return _embedded.GetStream();
+            return Embedded.GetStream();
         }
     }
 }

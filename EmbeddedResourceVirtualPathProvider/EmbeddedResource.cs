@@ -76,9 +76,6 @@ namespace EmbeddedResourceVirtualPathProvider
                 fileName = GetFileName(fileName);
 
                 return fileName;
-
-
-                return fileName;
             }
             catch (Exception ex)
             {
