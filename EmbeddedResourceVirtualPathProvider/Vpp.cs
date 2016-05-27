@@ -28,6 +28,12 @@ namespace EmbeddedResourceVirtualPathProvider
         public Func<EmbeddedResource, EmbeddedResourceCacheControl> CacheControl { get; set; }
         public List<VppAssemblyInfo> RegisteredAssemblies { get; private set; }
 
+        public override VirtualDirectory GetDirectory(string virtualDir)
+        {
+            var directory = base.GetDirectory(virtualDir);
+            return directory;
+        }
+
         public void Add(Assembly assembly, string projectSourcePath = null)
         {
             // retrieve absolute path if available
