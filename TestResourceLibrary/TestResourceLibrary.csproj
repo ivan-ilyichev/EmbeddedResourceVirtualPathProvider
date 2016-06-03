@@ -67,6 +67,10 @@
   <ItemGroup>
     <EmbeddedResource Include="alert asd - Copy.js" />
   </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Areas\Test\alert2.js" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BeforeBuild">
   </Target>

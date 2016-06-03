@@ -1,0 +1,14 @@
+﻿@model System.Web.Hosting.VirtualFile
+@{
+    ViewBag.Title = "";
+}
+
+<div>
+    <label>VirtualPath: </label> @Model.VirtualPath
+</div>
+<div>
+    <label>Name: </label> @Model.Name
+</div>
+<div>
+    <label>Type: </label> @Model.GetType().Name
+</div>

@@ -72,7 +72,7 @@ namespace EmbeddedResourceVirtualPathProvider.Provider
                 // This should work for most cases...
                 // unless this assembly has been merged
                 // with another assembly, and has inconsitent names.
-                var namespaces = assembly.GetTypes().GroupBy(x => x.Namespace).Select(x => x.Key);
+                var namespaces = assembly.GetTypes().GroupBy(x => x.Namespace).Select(x => x.Key).Where(n => !string.IsNullOrEmpty(n));
                 namespaces = GetMostUniquePrefixStrings(namespaces);
                 
                 this.CacheAssemblyResources(assembly, assemblyName, namespaces, resources);
@@ -218,16 +218,12 @@ namespace EmbeddedResourceVirtualPathProvider.Provider
 
                 if (childFolder == null)
                 {
-                    var folderParts = resourceName.Split('/');
-                    folderParts = folderParts.Take(folderParts.Length - 1).ToArray();
-                    var virtualPath = "~/" + String.Join("/", folderParts);
-                    var resourcePath = "~/" + String.Join("/", folderParts.Select(GetFolderPathDelegate));
+                    var virtualPath = (folder.VirtualPath ?? "~") + "/" + originalPart;
 
                     childFolder = new ResourceFolder()
                     {
                         Name = firstPart,
-                        VirtualPath = virtualPath,
-                        ResourcePath = resourcePath,
+                        VirtualPath = virtualPath
                     };
 
                     folder.AddFolder(childFolder);
@@ -235,18 +231,6 @@ namespace EmbeddedResourceVirtualPathProvider.Provider
 
                 this.ProcessFilePart(resourceName, nextParts, childFolder);
             }
-        }
-
-        private static string GetAssemblyPrefix(string namespaceName, string resourceName)
-        {
-            while (!String.IsNullOrWhiteSpace(namespaceName))
-            {
-                if (resourceName.StartsWith(namespaceName, StringComparison.OrdinalIgnoreCase))
-                    return namespaceName;
-                var lastIndex = namespaceName.LastIndexOf('.');
-                namespaceName = namespaceName.Substring(0, lastIndex);
-            }
-            return String.Empty;
         }
 
         /// <summary>
@@ -261,9 +245,7 @@ namespace EmbeddedResourceVirtualPathProvider.Provider
         {
             foreach (var resource in resources)
             {
-                var namespaceName = namespaces.First(x => resource.StartsWith(x));
-                // +1 for trailing dot.
-                var substringIndex = GetAssemblyPrefix(namespaceName, resource).Length + 1;
+                var substringIndex = assemblyName.Length + 1;
                 var relativeResourcePath = GetEmbeddedFileNamePath(resource.Substring(substringIndex));
                 // Create our item
                 IResourceFile item = new ResourceFile()

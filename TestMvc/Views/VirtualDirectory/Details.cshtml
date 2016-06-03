@@ -24,6 +24,7 @@
         {
             <li>
                 <a href="@Url.Action("Download", "VirtualFile", new {path = file.VirtualPath})">@file.Name</a>
+                <a href="@Url.Action("Details", "VirtualFile", new {path = file.VirtualPath})">details</a>
             </li>
         }
     </ul>
