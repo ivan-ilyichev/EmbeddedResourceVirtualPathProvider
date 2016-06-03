@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask AssemblyFile="EmbeddedResourceVirtualPathProvider.dll" TaskName="EmbeddedResourceVirtualPathProvider.Tasks.BuildResourceMetadata" />
+  <Import Project="$(MSBuildProjectDirectory)\App_Build\resourceprovider.targets"  Condition="Exists('$(MSBuildProjectDirectory)\App_Build\resourceprovider.targets')"/>
+  <Target Name="BuildResourceMetadata" BeforeTargets="BeforeBuild">
+    <!-- Import targets, this brings the keys / values upfront and center -->
+    <PropertyGroup>
+      <ResourceProviderKeys Condition="'$(ResourceProviderKeys)'==''"></ResourceProviderKeys>
+      <ResourceProviderValues Condition="'$(ResourceProviderValues)' == ''"></ResourceProviderValues>
+    </PropertyGroup>
+    <BuildResourceMetadata RelativePath="$(MSBuildProjectDirectory)" Resources="@(EmbeddedResource)" Keys="$(ResourceProviderKeys)" Values="$(ResourceProviderValues)"/>
+    <ItemGroup>
+      <EmbeddedResource Include="$(MSBuildProjectDirectory)\rpmetadata.json" />
+    </ItemGroup>
+  </Target>
+  <Target Name="CleanResourceMetadata" BeforeTargets="BeforeClean">
+    <Delete Files="$(MSBuildProjectDirectory)\rpmetadata.json" />
+  </Target>
+</Project>

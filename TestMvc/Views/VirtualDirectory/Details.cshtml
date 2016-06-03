@@ -1,0 +1,31 @@
+﻿@using System.Web.Hosting
+@model System.Web.Hosting.VirtualDirectory
+@{
+    ViewBag.Title = "";
+    var files = Model.Files;
+    var files2 = files.Cast<VirtualFileBase>
+        ().ToList();
+    var dirs = Model.Directories.Cast<VirtualDirectory>
+        ().ToList();
+
+    <div>directories:</div>
+    <ul>
+        @foreach (var dir in dirs)
+        {
+            <li>
+                <a href="@Url.Action("Details", "VirtualDirectory", new {path = dir.VirtualPath})">@dir.Name</a>
+            </li>
+        }
+    </ul>
+
+    <div>files:</div>
+    <ul>
+        @foreach (var file in files2)
+        {
+            <li>
+                <a href="@Url.Action("Download", "VirtualFile", new {path = file.VirtualPath})">@file.Name</a>
+            </li>
+        }
+    </ul>
+}
+

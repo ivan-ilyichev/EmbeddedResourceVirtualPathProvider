@@ -41,6 +41,8 @@ namespace EmbeddedResourceVirtualPathProvider
 
         public string FileName { get; private set; }
 
+        public string FullName { get; set; }
+
         public Func<Stream> GetStream { get; private set; }
         public Func<DateTime, CacheDependency> GetCacheDependency { get; private set; }
 

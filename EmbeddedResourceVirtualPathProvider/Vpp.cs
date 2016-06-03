@@ -7,17 +7,26 @@ using System.Reflection;
 using System.Web;
 using System.Web.Caching;
 using System.Web.Hosting;
+using EmbeddedResourceVirtualPathProvider.FileSystem;
+using EmbeddedResourceVirtualPathProvider.Provider;
 
 namespace EmbeddedResourceVirtualPathProvider
 {
     public class Vpp : VirtualPathProvider, IEnumerable
     {
-        readonly IDictionary<string, List<EmbeddedResource>> resources = new Dictionary<string, List<EmbeddedResource>>();
+        readonly IDictionary<string, EmbeddedResource> resources = new Dictionary<string, EmbeddedResource>();
+        private readonly IResourceProvider _resourceProvider;
 
-        public Vpp(params Assembly[] assemblies)
+        public Vpp(Dictionary<Assembly, string> assembliesInfo)
         {
+            var assemblies = assembliesInfo.Select(a => a.Key).ToList();
+            _resourceProvider = new ResourceProvider(assemblies);
+
             RegisteredAssemblies = new List<VppAssemblyInfo>();
-            Array.ForEach(assemblies, a => Add(a));
+            foreach (var assembly in assembliesInfo)
+            {
+                Add(assembly.Key, assembly.Value);
+            }
             UseResource = er => true;
             UseLocalIfAvailable = resource => true;
             CacheControl = er => null;
@@ -30,8 +39,24 @@ namespace EmbeddedResourceVirtualPathProvider
 
         public override VirtualDirectory GetDirectory(string virtualDir)
         {
-            var directory = base.GetDirectory(virtualDir);
-            return directory;
+            var embeddedDir = PathUtils.GetAbsolutePath(virtualDir);
+            if (_resourceProvider.FolderExists(embeddedDir))
+                return new MergedDirectory(virtualDir, embeddedDir, this._resourceProvider);
+
+            return base.GetDirectory(virtualDir);
+        }
+
+        public override bool DirectoryExists(string virtualDir)
+        {
+            if (base.DirectoryExists(virtualDir))
+                return true;
+
+            var embeddedDir = PathUtils.GetAbsolutePath(virtualDir);
+            
+            if (this._resourceProvider.FolderExists(embeddedDir))
+                return true;
+            
+            return false;
         }
 
         public void Add(Assembly assembly, string projectSourcePath = null)
@@ -57,13 +82,34 @@ namespace EmbeddedResourceVirtualPathProvider
             RegisteredAssemblies.Add(assemblyInfo);
 
             var assemblyName = assembly.GetName().Name;
+            var assemblyResources = assembly.GetManifestResourceNames();
 
-            foreach (var resourcePath in assembly.GetManifestResourceNames().Where(r => r.StartsWith(assemblyName)))
+            var assemblyFiles = new List<string>();
+            var resourcesFileName = assemblyName + ".vpp.json";
+            using (var stream = assembly.GetManifestResourceStream(resourcesFileName))
+            {
+                if (stream != null)
+                {
+                    using (var streamReader = new StreamReader(stream))
+                    {
+                        var filesInfo = streamReader.ReadToEnd();
+                        assemblyFiles = filesInfo.Split(new string[] {"\r\n", "\n"}, StringSplitOptions.None).ToList();
+                    }
+                }
+            }
+
+            foreach (var resourcePath in assemblyResources.Where(r => r.StartsWith(assemblyName)))
             {
                 var key = resourcePath.ToUpperInvariant().Substring(assemblyName.Length).TrimStart('.');
-                if (!resources.ContainsKey(key))
-                    resources[key] = new List<EmbeddedResource>();
-                resources[key].Insert(0, new EmbeddedResource(assemblyInfo, resourcePath));
+
+                var fullName = assemblyFiles.FirstOrDefault(f => f.Replace('\\', '.').Equals(key, StringComparison.InvariantCultureIgnoreCase));
+
+                var resource = new EmbeddedResource(assemblyInfo, resourcePath)
+                {
+                    FullName = fullName
+                };
+
+                resources[key] = resource;
             }
         }
  
@@ -114,7 +160,10 @@ namespace EmbeddedResourceVirtualPathProvider
             var key = (cleanedPath).ToUpperInvariant();
             if (resources.ContainsKey(key))
             {
-                var resource = resources[key].FirstOrDefault(UseResource);
+                var resource = UseResource.Invoke(resources[key])
+                    ? resources[key]
+                    : null;
+
                 if (resource != null && !ShouldUsePrevious(virtualPath, resource))
                 {
                     return resource;

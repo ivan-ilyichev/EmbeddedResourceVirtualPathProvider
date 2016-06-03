@@ -1,0 +1,1 @@
+﻿alert("alert.js (loaded from referenced assembly)")

@@ -58,12 +58,17 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\dashed.path\test.js" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="alert123.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="alert asd.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="alert asd - Copy.js" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <Import Project="..\bootstrapper\EmbeddedResourceBootstrapper.targets" Condition="Exists('..\bootstrapper\EmbeddedResourceBootstrapper.targets')" />
 </Project>
