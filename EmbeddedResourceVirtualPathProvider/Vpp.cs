@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -98,7 +99,7 @@ namespace EmbeddedResourceVirtualPathProvider
                 }
             }
 
-            foreach (var resourcePath in assemblyResources.Where(r => r.StartsWith(assemblyName)))
+            foreach (var resourcePath in assemblyResources.Where(r => r.StartsWith(assemblyName, true, CultureInfo.InvariantCulture)))
             {
                 var key = resourcePath.ToUpperInvariant().Substring(assemblyName.Length).TrimStart('.');
 
